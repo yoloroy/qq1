@@ -170,14 +170,14 @@ def find_clicked(xy):
         return False
 
 def draw_found():
-    pygame.draw.rect(screen, (105, 105, 105, 105), (found[0] * cell_size, found[1] * cell_size, cell_size, cell_size))
+    pygame.draw.rect(screen, pygame.Color(105, 105, 105, 0), (found[0] * cell_size, found[1] * cell_size, cell_size, cell_size))
 
 
 while running:
     for event in pygame.event.get():
         if pygame.event.wait().type == pygame.QUIT:
             running = False
-    screen.fill((0, 0, 0))
+    screen.fill((0, 0, 0, 0))
     
     draw_grid()
     if find_clicked(pygame.mouse.get_pos()):
@@ -185,6 +185,5 @@ while running:
     
     info()
     pygame.display.flip()
-    
 
 pygame.quit()
