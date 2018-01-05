@@ -1,53 +1,49 @@
 import pygame
-import random
+from random import choice, randint, random
+from math import sin, pi, cos
 
 pygame.init()
-size = width, height = 1940, 1024
+size = width, height = 750, 750
 screen = pygame.display.set_mode(size)
 running = True
-
 class Player:
-    def __init__(s, name, color):
-        s.name = name
-        s.color = color
+    def __init__(self, name, color):
+        self.name = name
+        self.color = color
 
 
 class Cell:
-    def __init__(self, x, y, p = None):
+    def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.player = p
+        self.yes = 0
+        self.player = Player('Empty', (55, 55, 55))
         self.supply = 20
         self.units = 0
-        self.income = random.randint(0,10)
+        self.income = randint(1,5)
     
-    def change_player(s, a):
-        s.player = a
+    def change_player(self, a):
+        self.player = a
     
-    def color(s):
-        return (255 * (10 - s.income) // 10, 255 * s.income // 10, 0)
+    def color(self):
+        return (255 * self.income // 20, 215 * self.income // 20, 0)
     
-    def __str__(s):
-        return str(s.income)
+    def __str__(self):
+        return str(self.income)
 
 
 players = []
 
 def find_point_on_circle(radius, gradus, ox, oy):
-    import math
+    ax = ox + radius * cos(gradus * pi / 180)
+    ay = oy + radius * sin(gradus * pi / 180)
     
-    radius = float(input())
-    gradus = float(input())
-    ox = float(input())
-    oy = float(input())
-    ax = ox + radius * math.sin((90 - gradus) * math.pi / 180)
-    ay = oy + radius * math.sin(gradus * math.pi / 180)
+    return ax, ay
 
-# это для начала
+# tool tip missing
 #for i in range(n):
 #    players.append(Player(input('name: '), eval(input('tuple of color(RGB): '))))
 players = [Player('red',(255, 0, 0)), Player('green', (0, 255, 0)), Player('blue', (0, 0, 255))]
-# потом исправь!
 
 
 cell_size = 50
@@ -57,40 +53,40 @@ map_grid = [[Cell(i, j) for j in range(map_size[0])] for i in range(map_size[1])
 center = (map_size[0]//2, map_size[1]//2)
 
 
-#совсем халтурный кусок
+# broken
 n=len(players)
 aaa=360//n
 for i in range(n):
-    x,y=find_point_on_circle(min(center),i*aaa,center[0],center[1])
-    map_grid[int(x)][int(y)]=players.pop()
-del aaa, x, y
+    x,y=find_point_on_circle(min(center)-4,i*aaa,center[0],center[1])
+    map_grid[int(y)][int(x)].change_player(players.pop())
+    map_grid[int(y)][int(x)].income=5
 
 
 def draw():
     screen.fill((0, 0, 0))
     draw_grid()
-
-def fill_quad(x1, y1, x2, y2, ob):
+    
+def fill_quad(x1, y1, x2, y2, col):
     for y in range(y1, y2):
         for x in range(x1, x2):
-            screen.set_at((x, y), ob.color())
+            screen.set_at((x, y), col)
 
 def draw_cell(num_x, num_y, ob):
     x = num_x * cell_size
     y = num_y * cell_size
-    fill_quad(x, y, x+cell_size, y+cell_size//2, ob)
+    pygame.draw.rect(screen, ob.player.color, (x, y, cell_size, cell_size // 2))
+    #except: pass
+    pygame.draw.rect(screen, ob.color(), (x, y + cell_size // 2, cell_size, cell_size // 2))
     font = pygame.font.Font(None, cell_size//2)
     text = font.render(str(ob), 1, (255, 255, 255))
-    screen.blit(text, (x+1, y+1))
     pygame.draw.rect(screen, (255, 255, 255), (x, y, cell_size,  cell_size), 1)
+    screen.blit(text, (x+1, y+1+cell_size // 2))
 
 def draw_grid():
-    for y in range(map_size[1]+1):
-        for x in range(map_size[0]+1):
-            try:
-                draw_cell(x, y, map_grid[y][x])
-            except IndexError:
-                pass
+    for y in range(map_size[1]):
+        for x in range(map_size[0]):
+            draw_cell(x, y, map_grid[y][x])
+
 
 draw_grid()
 pygame.display.flip()
