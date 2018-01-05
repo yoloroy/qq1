@@ -105,6 +105,7 @@ map_size = (9, 9)
 grid_color = pygame.Color(255, 255, 255)
 map_grid = [[Cell(i, j) for j in range(map_size[0])] for i in range(map_size[1])]
 center = (map_size[0]//2, map_size[1]//2)
+found = [-1, -1]
 
 
 # standing players
@@ -151,14 +152,39 @@ def draw_grid():
 def info():
     font = pygame.font.Font('Concib__.ttf', 25)
     screen.blit(font.render('Turn of '+players[playerS_turn].name, 1, (255, 255, 255)), (cell_size * (map_size[0]+0.5), cell_size // 2))
+    text = str((found[0], map_size[1] - 1 - found[1]))
+    screen.blit(font.render(text, 1, (255, 255, 255)), (cell_size * (map_size[0]+0.5), cell_size//2 + 25))
+
+def find_clicked(xy):
+    global found
+    try:
+        map_grid[found[0]][found[1]].clicked = False
+    except IndexError:
+        pass
     
+    try:
+        map_grid[xy[0] // cell_size][xy[1] // cell_size].clicked = True
+        found = [xy[0] // cell_size, xy[1] // cell_size]
+        return True
+    except IndexError:
+        return False
+
+def draw_found():
+    pygame.draw.rect(screen, (105, 105, 105, 105), (found[0] * cell_size, found[1] * cell_size, cell_size, cell_size))
 
 
 while running:
+    for event in pygame.event.get():
+        if pygame.event.wait().type == pygame.QUIT:
+            running = False
+    screen.fill((0, 0, 0))
+    
     draw_grid()
+    if find_clicked(pygame.mouse.get_pos()):
+        draw_found()
+    
     info()
     pygame.display.flip()
-    if pygame.event.wait().type == pygame.QUIT:
-        running = False
+    
 
 pygame.quit()
