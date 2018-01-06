@@ -29,11 +29,10 @@ class Cell:
         self.y = y
         self.yes = 0
         self.player = Player('Empty', (0, 0, 0))
-        self.supply = 20
-        self.units = 0
         self.income = 3
-        self.army = self.income - 2
+        self.units = 0
         self.clicked = False
+        self.direct = False
     
     def change_player(self, a):
         self.player = a
@@ -67,6 +66,9 @@ class Cell:
                 another_cell.units = 1
             self_cell.income -= 1
             return False
+    
+    def supply(self):
+        return self.income * 3
 
 
 class Button:
@@ -100,21 +102,23 @@ players = [Player('Red',(255, 0, 0)), Player('Blue', (0, 0, 255))]#, Player('gre
 
 
 playerS_turn = 0
-cell_size = 60
 map_size = (9, 9)
+cell_size = 60
 grid_color = pygame.Color(255, 255, 255)
 map_grid = [[Cell(i, j) for j in range(map_size[0])] for i in range(map_size[1])]
 center = (map_size[0]//2, map_size[1]//2)
 found = [-1, -1]
+last_click={'pos': [-1, -1], 'corr': False}
 
 
 # standing players
 n=len(players)
 aaa=360//n
 for i in range(n):
-    x, y = find_point_on_circle(min(center)//2, i * aaa,center[0], center[1])
+    x, y = find_point_on_circle(min(center) * 2 // 3, i * aaa,center[0], center[1])
     map_grid[int(y)][int(x)].change_player(players[i])
     map_grid[int(y)][int(x)].income = 5
+    map_grid[int(y)][int(x)].units = 1
 
 
 # drawing
@@ -150,39 +154,63 @@ def draw_grid():
             draw_cell(x, y, map_grid[y][x])
 
 def info():
-    font = pygame.font.Font('Concib__.ttf', 25)
+    font_w = 25
+    font = pygame.font.Font('Concib__.ttf', font_w)
     screen.blit(font.render('Turn of '+players[playerS_turn].name, 1, (255, 255, 255)), (cell_size * (map_size[0]+0.5), cell_size // 2))
-    text = str((found[0], map_size[1] - 1 - found[1]))
-    screen.blit(font.render(text, 1, (255, 255, 255)), (cell_size * (map_size[0]+0.5), cell_size//2 + 25))
+    text = str((last_click['pos'][0], map_size[1] - 1 - last_click['pos'][1]))
+    screen.blit(font.render(text, 1, (255, 255, 255)), (cell_size * (map_size[0]+0.5), cell_size//2 + font_w))
+    text = 'income: '+str(map_grid[last_click['pos'][1]][last_click['pos'][0]].income)
+    screen.blit(font.render(text, 1, (255, 255, 255)), (cell_size * (map_size[0]+0.5), cell_size//2 + font_w*2))
+    text = 'units: '+str(map_grid[last_click['pos'][1]][last_click['pos'][0]].units)+'/'+str(map_grid[last_click['pos'][1]][last_click['pos'][0]].supply())
+    screen.blit(font.render(text, 1, (255, 255, 255)), (cell_size * (map_size[0]+0.5), cell_size//2 + font_w*3))
 
-def find_clicked(xy):
+def find_cell_found(xy):
     global found
     try:
-        map_grid[found[0]][found[1]].clicked = False
+        map_grid[found[0]][found[1]].direct = False
     except IndexError:
         pass
     
     try:
-        map_grid[xy[0] // cell_size][xy[1] // cell_size].clicked = True
+        map_grid[xy[0] // cell_size][xy[1] // cell_size].direct = True
         found = [xy[0] // cell_size, xy[1] // cell_size]
         return True
     except IndexError:
         return False
 
-def draw_found():
-    pygame.draw.rect(screen, pygame.Color(105, 105, 105, 0), (found[0] * cell_size, found[1] * cell_size, cell_size, cell_size))
+def ColorNotError(err_color):
+    for i in range(3):
+        if err_color[i] > 255:
+            err_color[i] = 255
+        if err_color[i] < 0 :
+            err_color[i] = 0
+    return err_color
+
+def draw_found(xy): # make transparent
+    ox = xy[0] * cell_size
+    oy = xy[1] * cell_size
+    for y in range(cell_size):
+        for x in range(cell_size):
+            try:
+                screen.set_at((ox+x, oy+y), screen.get_at((ox+x, oy+y))+pygame.Color(100, 100, 100))
+            except IndexError:
+                return False
 
 
 while running:
     for event in pygame.event.get():
         if pygame.event.wait().type == pygame.QUIT:
             running = False
-    screen.fill((0, 0, 0, 0))
+    screen.fill((0, 0, 0))
     
     draw_grid()
-    if find_clicked(pygame.mouse.get_pos()):
-        draw_found()
     
+    if find_cell_found(pygame.mouse.get_pos()):
+        draw_found(found)
+        if pygame.mouse.get_pressed()[0]:
+            last_click['pos'] = found
+    
+    draw_found(last_click['pos'])
     info()
     pygame.display.flip()
 
