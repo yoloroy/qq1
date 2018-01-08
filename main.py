@@ -128,6 +128,11 @@ def find_point_on_circle(radius, gradus, ox, oy):
     
     return ax, ay
 
+def check_pos(a, b):
+    if a[0] in range(b[0][0], b[1][0]+1) and a[1] in range(b[0][1], b[1][1]+1):
+        return True
+    return False
+
 #               tool tip missing
 #for i in range(n):
 #    players.append(Player(input('name: '), eval(input('tuple of color(RGB): '))))
@@ -156,6 +161,7 @@ found = [-1, -1]
 action=''
 curuser=-1
 curcell = 0
+last4pos = (-1, -1)
 last_click={'pos': [-1, -1], 'corr': False}
 
 
@@ -268,13 +274,33 @@ def draw_found(xy): # make transparent
 
 while running:
     for event in pygame.event.get():
-        if str(event) == '<Event(12-Quit {})>':
+        #print(event)
+        if event.type == 12:
             running = False
+            pygame.event.clear()
+        if event.type == 5 and event.__dict__['button'] == 1:
+            if last4pos == (-1, -1):
+                last4pos = pygame.mouse.get_pos()
+            else:
+                if last4pos == pygame.mouse.get_pos():
+                    map_grid[found[1]][found[0]].upgrade(1)
+                    last4pos = (-1, -1)
+                else:
+                    last4pos = pygame.mouse.get_pos()
+        if event.type == 5 and event.__dict__['button'] == 3:
+            if last4pos == (-1, -1):
+                last4pos = pygame.mouse.get_pos()
+            else:
+                if last4pos == pygame.mouse.get_pos():
+                    map_grid[found[1]][found[0]].upgrade(-1)
+                    last4pos = (-1, -1)
+                else:
+                    last4pos = pygame.mouse.get_pos()
     onbutton=find_butt_found(pygame.mouse.get_pos())
     i=0
     for b in buttons:
         if i!=onbutton:
-            b.status=0        
+            b.status=0
         i=i+1
     
     if onbutton>=0:
@@ -286,7 +312,7 @@ while running:
                 print(buttons[onbutton].info)
             buttons[onbutton].status=2
     draw()
-        
+    
     if find_cell_found(pygame.mouse.get_pos()):
         draw_found(found)
         if pygame.mouse.get_pressed()[0]:
@@ -295,9 +321,7 @@ while running:
                 curuser=map_grid[found[1]][found[0]].player
                 curcell=map_grid[found[1]][found[0]]
             if action=='Capture':
-                #curcell.capture(map_grid[found[1]][found[0]])
                 map_grid[found[1]][found[0]].capture(curcell)
-                #map_grid[found[1]][found[0]].change_player(curuser)
                 action=''
             if action=='Upgrade':
                 map_grid[found[1]][found[0]].upgrade(1)
@@ -308,7 +332,9 @@ while running:
             if action=='End_turn':
                 end_turn()
                 action=''
-            
+    
+    
+    
     draw_found(last_click['pos'])
     info()
     pygame.display.flip()
